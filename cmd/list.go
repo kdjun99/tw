@@ -29,8 +29,6 @@ var listCmd = &cobra.Command{
 			return nil
 		}
 
-		showAll, _ := cmd.Flags().GetBool("all")
-
 		for i, proj := range cfg.Projects {
 			if i > 0 {
 				fmt.Println()
@@ -65,20 +63,12 @@ var listCmd = &cobra.Command{
 					diffStr = strings.Join(parts, " ")
 				}
 
-				icon := "  "
-				if wt.Path == proj.Path {
-					icon = "  " // main worktree
-					if !showAll && stat.Added == 0 && stat.Removed == 0 {
-						// Show main even without changes
-					}
-				}
-
 				branchDisplay := wt.Branch
 				if branchDisplay == "" {
 					branchDisplay = "(detached)"
 				}
 
-				fmt.Fprintf(w, "%s├── %s\t%s\t%s\n", icon, branchDisplay, diffStr, shortenPath(wt.Path))
+				fmt.Fprintf(w, "  \u251c\u2500\u2500 %s\t%s\t%s\n", branchDisplay, diffStr, shortenPath(wt.Path))
 			}
 			w.Flush()
 		}

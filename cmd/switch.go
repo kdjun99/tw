@@ -70,7 +70,7 @@ var switchCmd = &cobra.Command{
 					label = fmt.Sprintf("\033[1;36m%s\033[0m / \033[32m%s\033[0m%s", proj.Name, branchName, diffStr)
 				}
 
-				value := fmt.Sprintf("%s:%s:%s", proj.Name, wt.Branch, wt.Path)
+				value := fmt.Sprintf("%s:%s:%s", proj.Name, branchName, wt.Path)
 				items = append(items, ui.Item{Display: label, Value: value})
 			}
 		}

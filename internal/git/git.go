@@ -64,8 +64,11 @@ func AddWorktreeExisting(repoPath, worktreePath, branch string) error {
 }
 
 func RemoveWorktree(repoPath, worktreePath string) error {
-	_, err := runGit(repoPath, "worktree", "remove", "--force", worktreePath)
-	return err
+	_, err := runGit(repoPath, "worktree", "remove", worktreePath)
+	if err != nil {
+		return fmt.Errorf("%w (use git worktree remove --force manually if needed)", err)
+	}
+	return nil
 }
 
 func CurrentBranch(path string) string {
@@ -77,24 +80,11 @@ func CurrentBranch(path string) string {
 }
 
 func GetDiffStat(path string) DiffStat {
-	out, err := runGit(path, "diff", "--numstat", "HEAD")
-	if err != nil {
-		return DiffStat{}
-	}
 	var stat DiffStat
-	for _, line := range strings.Split(strings.TrimSpace(out), "\n") {
-		if line == "" {
-			continue
-		}
-		var added, removed int
-		fmt.Sscanf(line, "%d\t%d", &added, &removed)
-		stat.Added += added
-		stat.Removed += removed
-	}
-	// Also count untracked/staged
-	outStaged, err := runGit(path, "diff", "--numstat", "--cached")
-	if err == nil {
-		for _, line := range strings.Split(strings.TrimSpace(outStaged), "\n") {
+
+	// Unstaged changes (working tree vs index)
+	if out, err := runGit(path, "diff", "--numstat"); err == nil {
+		for _, line := range strings.Split(strings.TrimSpace(out), "\n") {
 			if line == "" {
 				continue
 			}
@@ -104,6 +94,20 @@ func GetDiffStat(path string) DiffStat {
 			stat.Removed += removed
 		}
 	}
+
+	// Staged changes (index vs HEAD)
+	if out, err := runGit(path, "diff", "--numstat", "--cached"); err == nil {
+		for _, line := range strings.Split(strings.TrimSpace(out), "\n") {
+			if line == "" {
+				continue
+			}
+			var added, removed int
+			fmt.Sscanf(line, "%d\t%d", &added, &removed)
+			stat.Added += added
+			stat.Removed += removed
+		}
+	}
+
 	return stat
 }
 

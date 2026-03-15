@@ -53,17 +53,13 @@ var rmCmd = &cobra.Command{
 			}
 		}
 
-		// Run teardown before removing worktree
+		// Run teardown and remove worktree
 		if !keepWorktree {
 			wtDir := proj.ResolveWorktreeDir()
 			wtPath := git.ResolveWorktreePath(wtDir, branch)
-			setup.RunTeardown(proj, wtPath)
-		}
 
-		// Remove worktree
-		if !keepWorktree {
-			wtDir := proj.ResolveWorktreeDir()
-			wtPath := git.ResolveWorktreePath(wtDir, branch)
+			setup.RunTeardown(proj, wtPath)
+
 			if err := git.RemoveWorktree(proj.Path, wtPath); err != nil {
 				return fmt.Errorf("remove worktree: %w", err)
 			}
