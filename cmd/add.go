@@ -5,6 +5,7 @@ import (
 
 	"github.com/dongjunkim/tw/internal/config"
 	"github.com/dongjunkim/tw/internal/git"
+	"github.com/dongjunkim/tw/internal/setup"
 	"github.com/dongjunkim/tw/internal/tmux"
 	"github.com/spf13/cobra"
 )
@@ -56,6 +57,20 @@ var addCmd = &cobra.Command{
 		}
 
 		fmt.Printf("Worktree created at %s\n", wtPath)
+
+		// Run setup (copy files + run commands)
+		noSetup, _ := cmd.Flags().GetBool("no-setup")
+		if !noSetup {
+			setupCfg, err := setup.LoadConfig(proj.Path)
+			if err != nil {
+				fmt.Printf("Warning: failed to load .tw.toml: %v\n", err)
+			} else if setupCfg != nil {
+				fmt.Println("Running workspace setup...")
+				if err := setup.RunSetup(proj.Path, wtPath, setupCfg); err != nil {
+					fmt.Printf("Warning: setup failed: %v\n", err)
+				}
+			}
+		}
 
 		if noTmux {
 			return nil
@@ -109,6 +124,7 @@ func init() {
 	addCmd.Flags().String("base", "", "base branch (defaults to project's default branch)")
 	addCmd.Flags().Bool("existing", false, "checkout existing branch instead of creating new")
 	addCmd.Flags().Bool("no-tmux", false, "create worktree only, skip tmux")
+	addCmd.Flags().Bool("no-setup", false, "skip .tw.toml setup steps")
 	addCmd.Flags().BoolP("switch", "s", true, "auto-switch to new window")
 
 	rootCmd.AddCommand(addCmd)

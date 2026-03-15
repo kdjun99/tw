@@ -5,6 +5,7 @@ import (
 
 	"github.com/dongjunkim/tw/internal/config"
 	"github.com/dongjunkim/tw/internal/git"
+	"github.com/dongjunkim/tw/internal/setup"
 	"github.com/dongjunkim/tw/internal/tmux"
 	"github.com/spf13/cobra"
 )
@@ -42,6 +43,13 @@ var rmCmd = &cobra.Command{
 					fmt.Printf("Closed tmux window %q\n", windowName)
 				}
 			}
+		}
+
+		// Run teardown before removing worktree
+		if !keepWorktree {
+			wtDir := proj.ResolveWorktreeDir()
+			wtPath := git.ResolveWorktreePath(wtDir, branch)
+			setup.RunTeardown(proj.Path, wtPath)
 		}
 
 		// Remove worktree
