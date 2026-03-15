@@ -1,7 +1,6 @@
 package terminal
 
 import (
-	"os/exec"
 	"testing"
 )
 
@@ -19,19 +18,17 @@ func TestNewBackend_Cmux(t *testing.T) {
 	}
 }
 
-func TestNewBackend_Auto(t *testing.T) {
+func TestNewBackend_DefaultIsTmux(t *testing.T) {
 	b := NewBackend("")
-	name := b.Name()
-	if name != "tmux" && name != "cmux" {
-		t.Errorf("NewBackend('').Name() = %q, want tmux or cmux", name)
+	if b.Name() != "tmux" {
+		t.Errorf("NewBackend('').Name() = %q, want %q", b.Name(), "tmux")
 	}
 }
 
-func TestNewBackend_AutoSameAsDefault(t *testing.T) {
-	b1 := NewBackend("auto")
-	b2 := NewBackend("")
-	if b1.Name() != b2.Name() {
-		t.Errorf("NewBackend(auto) = %q, NewBackend('') = %q, should be equal", b1.Name(), b2.Name())
+func TestNewBackend_UnknownDefaultsTmux(t *testing.T) {
+	b := NewBackend("unknown")
+	if b.Name() != "tmux" {
+		t.Errorf("NewBackend(unknown).Name() = %q, want %q", b.Name(), "tmux")
 	}
 }
 
@@ -49,13 +46,6 @@ func TestCmuxBackend_Interface(t *testing.T) {
 	}
 }
 
-func TestHasCmux(t *testing.T) {
-	_, err := exec.LookPath("cmux")
-	expected := err == nil
-	if hasCmux() != expected {
-		t.Errorf("hasCmux() = %v, expected %v", hasCmux(), expected)
-	}
-}
 
 func TestTmuxBackend_SessionExists_NonExistent(t *testing.T) {
 	b := &TmuxBackend{}
