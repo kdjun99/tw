@@ -20,7 +20,24 @@ var projectCmd = &cobra.Command{
 var projectAddCmd = &cobra.Command{
 	Use:   "add <name> <path>",
 	Short: "Register a git repository as a project",
-	Args:  cobra.ExactArgs(2),
+	Example: `  # Basic registration (auto-detects default branch)
+  tw project add myapp ~/dev/myapp
+
+  # Specify default branch
+  tw project add api ~/dev/api-server --default-branch develop
+
+  # With setup automation
+  tw project add myapp ~/dev/myapp \
+    --copy '.env*' \
+    --setup-run 'bun install' \
+    --teardown-run 'docker compose down'
+
+  # Multiple setup commands
+  tw project add myapp ~/dev/myapp \
+    --copy '.env*' \
+    --setup-run 'npm install' \
+    --setup-run 'npm run build'`,
+	Args: cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		name := args[0]
 		path, err := filepath.Abs(args[1])

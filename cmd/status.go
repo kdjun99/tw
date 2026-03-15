@@ -13,6 +13,8 @@ var statusCmd = &cobra.Command{
 	Use:     "status",
 	Aliases: []string{"st"},
 	Short:   "Show diff stats for all workspaces",
+	Example: `  tw status    # show +/- line stats per workspace
+  tw st        # alias`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg, err := config.Load()
 		if err != nil {

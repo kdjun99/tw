@@ -15,6 +15,9 @@ var listCmd = &cobra.Command{
 	Use:     "list",
 	Aliases: []string{"ls"},
 	Short:   "List all projects and their workspaces",
+	Example: `  tw list       # show all projects and worktrees
+  tw ls         # alias
+  tw list -a    # show all details`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg, err := config.Load()
 		if err != nil {

@@ -14,7 +14,15 @@ var rmCmd = &cobra.Command{
 	Use:     "rm <project> <branch>",
 	Aliases: []string{"remove"},
 	Short:   "Remove a workspace (git worktree + tmux window)",
-	Args:    cobra.ExactArgs(2),
+	Example: `  # Remove worktree + tmux window
+  tw rm myapp feature/login
+
+  # Keep worktree, only close tmux window
+  tw rm myapp feature/login --keep-worktree
+
+  # Keep tmux window, only remove worktree
+  tw rm myapp feature/login --keep-tmux`,
+	Args: cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		projectName := args[0]
 		branch := args[1]

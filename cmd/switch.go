@@ -15,6 +15,9 @@ var switchCmd = &cobra.Command{
 	Use:     "switch",
 	Aliases: []string{"sw", "s"},
 	Short:   "Interactively switch workspace (fzf)",
+	Example: `  tw switch    # opens fzf selector
+  tw sw        # alias
+  tw s         # short alias`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if !ui.HasFzf() {
 			return fmt.Errorf("fzf is required for interactive switching. Install: brew install fzf")

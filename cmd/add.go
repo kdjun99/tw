@@ -13,7 +13,21 @@ import (
 var addCmd = &cobra.Command{
 	Use:   "add <project> <branch>",
 	Short: "Create a new workspace (git worktree + tmux window)",
-	Args:  cobra.ExactArgs(2),
+	Example: `  # New feature branch from default base
+  tw add myapp feature/login
+
+  # Specify base branch
+  tw add myapp feature/auth --base develop
+
+  # Checkout existing branch
+  tw add myapp fix/bug-123 --existing
+
+  # Worktree only, no tmux window
+  tw add myapp experiment/new-idea --no-tmux
+
+  # Skip setup scripts
+  tw add myapp hotfix/urgent --no-setup`,
+	Args: cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		projectName := args[0]
 		branch := args[1]
