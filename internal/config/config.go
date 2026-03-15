@@ -18,7 +18,8 @@ func (p Project) ResolveWorktreeDir() string {
 	if p.WorktreeDir != "" {
 		return p.WorktreeDir
 	}
-	return filepath.Join(filepath.Dir(p.Path), p.Name+"-worktrees")
+	home, _ := os.UserHomeDir()
+	return filepath.Join(home, ".tw", p.Name)
 }
 
 type Config struct {
