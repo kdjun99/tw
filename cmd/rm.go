@@ -6,22 +6,21 @@ import (
 	"github.com/dongjunkim/tw/internal/config"
 	"github.com/dongjunkim/tw/internal/git"
 	"github.com/dongjunkim/tw/internal/setup"
-	"github.com/dongjunkim/tw/internal/tmux"
 	"github.com/spf13/cobra"
 )
 
 var rmCmd = &cobra.Command{
 	Use:     "rm <project> <branch>",
 	Aliases: []string{"remove"},
-	Short:   "Remove a workspace (git worktree + tmux window)",
-	Example: `  # Remove worktree + tmux window
+	Short:   "Remove a workspace (git worktree + terminal window)",
+	Example: `  # Remove worktree + terminal window
   tw rm myapp feature/login
 
-  # Keep worktree, only close tmux window
+  # Keep worktree, only close terminal window
   tw rm myapp feature/login --keep-worktree
 
-  # Keep tmux window, only remove worktree
-  tw rm myapp feature/login --keep-tmux`,
+  # Keep terminal window, only remove worktree
+  tw rm myapp feature/login --keep-terminal`,
 	Args: cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		projectName := args[0]
@@ -38,17 +37,18 @@ var rmCmd = &cobra.Command{
 		}
 
 		keepWorktree, _ := cmd.Flags().GetBool("keep-worktree")
-		keepTmux, _ := cmd.Flags().GetBool("keep-tmux")
+		keepTerminal, _ := cmd.Flags().GetBool("keep-terminal")
 
-		// Remove tmux window
-		if !keepTmux {
+		// Remove terminal window
+		if !keepTerminal {
+			b := getBackend()
 			sessionName := projectName
 			windowName := shortBranch(branch)
-			if tmux.SessionExists(sessionName) {
-				if err := tmux.KillWindow(sessionName, windowName); err != nil {
-					fmt.Printf("Warning: could not close tmux window: %v\n", err)
+			if b.SessionExists(sessionName) {
+				if err := b.KillWindow(sessionName, windowName); err != nil {
+					fmt.Printf("Warning: could not close window: %v\n", err)
 				} else {
-					fmt.Printf("Closed tmux window %q\n", windowName)
+					fmt.Printf("Closed window %q (%s)\n", windowName, b.Name())
 				}
 			}
 		}
@@ -71,8 +71,9 @@ var rmCmd = &cobra.Command{
 }
 
 func init() {
-	rmCmd.Flags().Bool("keep-worktree", false, "keep the git worktree, only close tmux window")
-	rmCmd.Flags().Bool("keep-tmux", false, "keep tmux window, only remove worktree")
+	rmCmd.Flags().Bool("keep-worktree", false, "keep the git worktree, only close terminal window")
+	rmCmd.Flags().Bool("keep-terminal", false, "keep terminal window, only remove worktree")
+	rmCmd.Flags().Bool("keep-tmux", false, "alias for --keep-terminal (deprecated)")
 
 	rootCmd.AddCommand(rmCmd)
 }

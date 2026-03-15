@@ -6,7 +6,6 @@ import (
 
 	"github.com/dongjunkim/tw/internal/config"
 	"github.com/dongjunkim/tw/internal/git"
-	"github.com/dongjunkim/tw/internal/tmux"
 	"github.com/dongjunkim/tw/internal/ui"
 	"github.com/spf13/cobra"
 )
@@ -14,7 +13,7 @@ import (
 var attachCmd = &cobra.Command{
 	Use:     "attach [project[/window]]",
 	Aliases: []string{"a"},
-	Short:   "Attach to a project's tmux session",
+	Short:   "Attach to a project's terminal session",
 	Example: `  # Attach to myapp session (creates if needed)
   tw attach myapp
 
@@ -65,13 +64,15 @@ var attachCmd = &cobra.Command{
 			return fmt.Errorf("project %q not found", projectName)
 		}
 
-		// Ensure tmux session exists
+		b := getBackend()
+
+		// Ensure session exists
 		sessionCreated := false
-		if !tmux.SessionExists(projectName) {
-			if err := tmux.CreateSession(projectName, proj.Path); err != nil {
+		if !b.SessionExists(projectName) {
+			if err := b.CreateSession(projectName, proj.Path); err != nil {
 				return fmt.Errorf("create session: %w", err)
 			}
-			fmt.Printf("Created tmux session %q\n", projectName)
+			fmt.Printf("Created %s session %q\n", b.Name(), projectName)
 			sessionCreated = true
 		}
 
@@ -81,7 +82,7 @@ var attachCmd = &cobra.Command{
 			// Get existing windows to avoid duplicates
 			existingWindows := map[string]bool{}
 			if !sessionCreated {
-				if windows, err := tmux.ListWindows(projectName); err == nil {
+				if windows, err := b.ListWindows(projectName); err == nil {
 					for _, w := range windows {
 						existingWindows[w.Name] = true
 					}
@@ -100,7 +101,7 @@ var attachCmd = &cobra.Command{
 				if existingWindows[winName] {
 					continue
 				}
-				if err := tmux.NewWindow(projectName, winName, wt.Path); err != nil {
+				if err := b.NewWindow(projectName, winName, wt.Path); err != nil {
 					fmt.Printf("Warning: could not create window for %s: %v\n", branchName, err)
 				} else {
 					fmt.Printf("  Window %q (%s)\n", winName, branchName)
@@ -109,7 +110,7 @@ var attachCmd = &cobra.Command{
 		}
 
 		// Attach/switch to session (optionally with window)
-		if err := tmux.SwitchTo(projectName, windowName); err != nil {
+		if err := b.SwitchTo(projectName, windowName); err != nil {
 			if windowName != "" {
 				return fmt.Errorf("window %q not found in session %q", windowName, projectName)
 			}

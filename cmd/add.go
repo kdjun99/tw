@@ -6,13 +6,12 @@ import (
 	"github.com/dongjunkim/tw/internal/config"
 	"github.com/dongjunkim/tw/internal/git"
 	"github.com/dongjunkim/tw/internal/setup"
-	"github.com/dongjunkim/tw/internal/tmux"
 	"github.com/spf13/cobra"
 )
 
 var addCmd = &cobra.Command{
 	Use:   "add <project> <branch>",
-	Short: "Create a new workspace (git worktree + tmux window)",
+	Short: "Create a new workspace (git worktree + terminal window)",
 	Example: `  # New feature branch from default base
   tw add myapp feature/login
 
@@ -22,8 +21,8 @@ var addCmd = &cobra.Command{
   # Checkout existing branch
   tw add myapp fix/bug-123 --existing
 
-  # Worktree only, no tmux window
-  tw add myapp experiment/new-idea --no-tmux
+  # Worktree only, no terminal window
+  tw add myapp experiment/new-idea --no-terminal
 
   # Skip setup scripts
   tw add myapp hotfix/urgent --no-setup`,
@@ -48,7 +47,7 @@ var addCmd = &cobra.Command{
 		}
 
 		useExisting, _ := cmd.Flags().GetBool("existing")
-		noTmux, _ := cmd.Flags().GetBool("no-tmux")
+		noTerminal, _ := cmd.Flags().GetBool("no-terminal")
 
 		// Resolve worktree path
 		wtDir := proj.ResolveWorktreeDir()
@@ -81,30 +80,32 @@ var addCmd = &cobra.Command{
 			}
 		}
 
-		if noTmux {
+		if noTerminal {
 			return nil
 		}
 
-		// Create tmux session if not exists, then add window
+		b := getBackend()
+
+		// Create session if not exists, then add window
 		sessionName := projectName
-		if !tmux.SessionExists(sessionName) {
-			if err := tmux.CreateSession(sessionName, proj.Path); err != nil {
-				return fmt.Errorf("create tmux session: %w", err)
+		if !b.SessionExists(sessionName) {
+			if err := b.CreateSession(sessionName, proj.Path); err != nil {
+				return fmt.Errorf("create session: %w", err)
 			}
-			fmt.Printf("Created tmux session %q\n", sessionName)
+			fmt.Printf("Created %s session %q\n", b.Name(), sessionName)
 		}
 
 		windowName := shortBranch(branch)
-		if err := tmux.NewWindow(sessionName, windowName, wtPath); err != nil {
-			return fmt.Errorf("create tmux window: %w", err)
+		if err := b.NewWindow(sessionName, windowName, wtPath); err != nil {
+			return fmt.Errorf("create window: %w", err)
 		}
 
-		fmt.Printf("Created tmux window %q in session %q\n", windowName, sessionName)
+		fmt.Printf("Created window %q in session %q (%s)\n", windowName, sessionName, b.Name())
 
-		// Auto-switch if inside tmux
+		// Auto-switch if inside the active backend
 		switchFlag, _ := cmd.Flags().GetBool("switch")
-		if switchFlag && tmux.IsInsideTmux() {
-			return tmux.SwitchTo(sessionName, windowName)
+		if switchFlag && b.IsActive() {
+			return b.SwitchTo(sessionName, windowName)
 		}
 
 		return nil
@@ -132,7 +133,8 @@ func splitLast(s, sep string) []string {
 func init() {
 	addCmd.Flags().String("base", "", "base branch (defaults to project's default branch)")
 	addCmd.Flags().Bool("existing", false, "checkout existing branch instead of creating new")
-	addCmd.Flags().Bool("no-tmux", false, "create worktree only, skip tmux")
+	addCmd.Flags().Bool("no-terminal", false, "create worktree only, skip terminal window")
+	addCmd.Flags().Bool("no-tmux", false, "alias for --no-terminal (deprecated)")
 	addCmd.Flags().Bool("no-setup", false, "skip .tw.toml setup steps")
 	addCmd.Flags().BoolP("switch", "s", true, "auto-switch to new window")
 

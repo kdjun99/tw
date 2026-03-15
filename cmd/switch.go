@@ -6,7 +6,6 @@ import (
 
 	"github.com/dongjunkim/tw/internal/config"
 	"github.com/dongjunkim/tw/internal/git"
-	"github.com/dongjunkim/tw/internal/tmux"
 	"github.com/dongjunkim/tw/internal/ui"
 	"github.com/spf13/cobra"
 )
@@ -93,21 +92,23 @@ var switchCmd = &cobra.Command{
 		windowName := shortBranch(parts[1])
 		wtPath := parts[2]
 
-		// Ensure tmux session exists
+		b := getBackend()
+
+		// Ensure session exists
 		sessionName := projectName
-		if !tmux.SessionExists(sessionName) {
-			if err := tmux.CreateSession(sessionName, wtPath); err != nil {
+		if !b.SessionExists(sessionName) {
+			if err := b.CreateSession(sessionName, wtPath); err != nil {
 				return fmt.Errorf("create session: %w", err)
 			}
 		}
 
 		// Try to switch to existing window, or create one
-		if err := tmux.SwitchTo(sessionName, windowName); err != nil {
+		if err := b.SwitchTo(sessionName, windowName); err != nil {
 			// Window might not exist, create it
-			if createErr := tmux.NewWindow(sessionName, windowName, wtPath); createErr != nil {
+			if createErr := b.NewWindow(sessionName, windowName, wtPath); createErr != nil {
 				return fmt.Errorf("create window: %w", createErr)
 			}
-			return tmux.SwitchTo(sessionName, windowName)
+			return b.SwitchTo(sessionName, windowName)
 		}
 
 		return nil

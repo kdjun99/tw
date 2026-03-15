@@ -35,6 +35,7 @@ func (p Project) ResolveWorktreeDir() string {
 
 type Config struct {
 	Projects []Project `json:"projects"`
+	Backend  string    `json:"backend,omitempty"`
 }
 
 func configDir() string {
