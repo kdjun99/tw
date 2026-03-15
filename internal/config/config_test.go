@@ -141,6 +141,69 @@ func TestSaveAndReload(t *testing.T) {
 	}
 }
 
+func TestUpdateProject(t *testing.T) {
+	_, cleanup := setupTestConfig(t)
+	defer cleanup()
+
+	cfg, _ := Load()
+	cfg.AddProject(Project{Name: "myapp", Path: "/dev/myapp", DefaultBranch: "main"})
+
+	// Normal update
+	updated := Project{Name: "myapp", Path: "/dev/myapp", DefaultBranch: "develop"}
+	if err := cfg.UpdateProject("myapp", updated); err != nil {
+		t.Fatal(err)
+	}
+	p := cfg.FindProject("myapp")
+	if p.DefaultBranch != "develop" {
+		t.Errorf("defaultBranch = %q, want %q", p.DefaultBranch, "develop")
+	}
+}
+
+func TestUpdateProjectRename(t *testing.T) {
+	_, cleanup := setupTestConfig(t)
+	defer cleanup()
+
+	cfg, _ := Load()
+	cfg.AddProject(Project{Name: "old", Path: "/dev/old", DefaultBranch: "main"})
+
+	updated := Project{Name: "new", Path: "/dev/old", DefaultBranch: "main"}
+	if err := cfg.UpdateProject("old", updated); err != nil {
+		t.Fatal(err)
+	}
+	if cfg.FindProject("old") != nil {
+		t.Error("old name should not exist")
+	}
+	if cfg.FindProject("new") == nil {
+		t.Error("new name should exist")
+	}
+}
+
+func TestUpdateProjectNameConflict(t *testing.T) {
+	_, cleanup := setupTestConfig(t)
+	defer cleanup()
+
+	cfg, _ := Load()
+	cfg.AddProject(Project{Name: "a", Path: "/a", DefaultBranch: "main"})
+	cfg.AddProject(Project{Name: "b", Path: "/b", DefaultBranch: "main"})
+
+	// Try to rename "a" to "b" — should fail
+	updated := Project{Name: "b", Path: "/a", DefaultBranch: "main"}
+	if err := cfg.UpdateProject("a", updated); err == nil {
+		t.Error("expected error for name conflict")
+	}
+}
+
+func TestUpdateProjectNotFound(t *testing.T) {
+	_, cleanup := setupTestConfig(t)
+	defer cleanup()
+
+	cfg, _ := Load()
+	err := cfg.UpdateProject("nope", Project{Name: "nope"})
+	if err == nil {
+		t.Error("expected error for nonexistent project")
+	}
+}
+
 func TestResolveWorktreeDir(t *testing.T) {
 	home, _ := os.UserHomeDir()
 

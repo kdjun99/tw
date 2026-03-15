@@ -91,6 +91,19 @@ func (c *Config) AddProject(p Project) error {
 	return c.Save()
 }
 
+func (c *Config) UpdateProject(originalName string, updated Project) error {
+	for i, p := range c.Projects {
+		if p.Name == originalName {
+			if updated.Name != originalName && c.FindProject(updated.Name) != nil {
+				return fmt.Errorf("project %q already exists", updated.Name)
+			}
+			c.Projects[i] = updated
+			return c.Save()
+		}
+	}
+	return fmt.Errorf("project %q not found", originalName)
+}
+
 func (c *Config) RemoveProject(name string) error {
 	for i, p := range c.Projects {
 		if p.Name == name {
