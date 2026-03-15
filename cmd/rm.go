@@ -49,7 +49,7 @@ var rmCmd = &cobra.Command{
 		if !keepWorktree {
 			wtDir := proj.ResolveWorktreeDir()
 			wtPath := git.ResolveWorktreePath(wtDir, branch)
-			setup.RunTeardown(proj.Path, wtPath)
+			setup.RunTeardown(proj, wtPath)
 		}
 
 		// Remove worktree

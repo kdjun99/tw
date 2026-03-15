@@ -7,54 +7,22 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"github.com/BurntSushi/toml"
+	"github.com/dongjunkim/tw/internal/config"
 )
 
-type Config struct {
-	Setup    SetupConfig    `toml:"setup"`
-	Teardown TeardownConfig `toml:"teardown"`
-}
-
-type SetupConfig struct {
-	Copy []string `toml:"copy"`
-	Run  []string `toml:"run"`
-}
-
-type TeardownConfig struct {
-	Run []string `toml:"run"`
-}
-
-const ConfigFileName = ".tw.toml"
-
-func LoadConfig(repoPath string) (*Config, error) {
-	path := filepath.Join(repoPath, ConfigFileName)
-	data, err := os.ReadFile(path)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return nil, nil
-		}
-		return nil, fmt.Errorf("read %s: %w", ConfigFileName, err)
-	}
-	var cfg Config
-	if err := toml.Unmarshal(data, &cfg); err != nil {
-		return nil, fmt.Errorf("parse %s: %w", ConfigFileName, err)
-	}
-	return &cfg, nil
-}
-
-func RunSetup(repoPath, worktreePath string, cfg *Config) error {
-	if cfg == nil {
+func RunSetup(proj *config.Project, worktreePath string) error {
+	if proj.Setup == nil {
 		return nil
 	}
 
 	// Copy files
-	for _, pattern := range cfg.Setup.Copy {
-		matches, err := filepath.Glob(filepath.Join(repoPath, pattern))
+	for _, pattern := range proj.Setup.Copy {
+		matches, err := filepath.Glob(filepath.Join(proj.Path, pattern))
 		if err != nil {
 			return fmt.Errorf("glob %q: %w", pattern, err)
 		}
 		for _, src := range matches {
-			rel, _ := filepath.Rel(repoPath, src)
+			rel, _ := filepath.Rel(proj.Path, src)
 			dst := filepath.Join(worktreePath, rel)
 
 			if err := os.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
@@ -68,7 +36,7 @@ func RunSetup(repoPath, worktreePath string, cfg *Config) error {
 	}
 
 	// Run commands
-	for _, cmdStr := range cfg.Setup.Run {
+	for _, cmdStr := range proj.Setup.Run {
 		fmt.Printf("  Running: %s\n", cmdStr)
 		cmd := exec.Command("sh", "-c", cmdStr)
 		cmd.Dir = worktreePath
@@ -82,13 +50,12 @@ func RunSetup(repoPath, worktreePath string, cfg *Config) error {
 	return nil
 }
 
-func RunTeardown(repoPath, worktreePath string) error {
-	cfg, err := LoadConfig(repoPath)
-	if err != nil || cfg == nil {
-		return err
+func RunTeardown(proj *config.Project, worktreePath string) {
+	if proj.Teardown == nil {
+		return
 	}
 
-	for _, cmdStr := range cfg.Teardown.Run {
+	for _, cmdStr := range proj.Teardown.Run {
 		fmt.Printf("  Running teardown: %s\n", cmdStr)
 		cmd := exec.Command("sh", "-c", cmdStr)
 		cmd.Dir = worktreePath
@@ -98,8 +65,6 @@ func RunTeardown(repoPath, worktreePath string) error {
 			fmt.Printf("  Warning: teardown %q failed: %v\n", cmdStr, err)
 		}
 	}
-
-	return nil
 }
 
 func copyFile(src, dst string) error {

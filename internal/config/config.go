@@ -7,11 +7,22 @@ import (
 	"path/filepath"
 )
 
+type SetupConfig struct {
+	Copy []string `json:"copy,omitempty"`
+	Run  []string `json:"run,omitempty"`
+}
+
+type TeardownConfig struct {
+	Run []string `json:"run,omitempty"`
+}
+
 type Project struct {
-	Name          string `json:"name"`
-	Path          string `json:"path"`
-	DefaultBranch string `json:"defaultBranch"`
-	WorktreeDir   string `json:"worktreeDir,omitempty"`
+	Name          string          `json:"name"`
+	Path          string          `json:"path"`
+	DefaultBranch string          `json:"defaultBranch"`
+	WorktreeDir   string          `json:"worktreeDir,omitempty"`
+	Setup         *SetupConfig    `json:"setup,omitempty"`
+	Teardown      *TeardownConfig `json:"teardown,omitempty"`
 }
 
 func (p Project) ResolveWorktreeDir() string {

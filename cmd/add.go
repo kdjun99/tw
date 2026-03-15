@@ -60,15 +60,10 @@ var addCmd = &cobra.Command{
 
 		// Run setup (copy files + run commands)
 		noSetup, _ := cmd.Flags().GetBool("no-setup")
-		if !noSetup {
-			setupCfg, err := setup.LoadConfig(proj.Path)
-			if err != nil {
-				fmt.Printf("Warning: failed to load .tw.toml: %v\n", err)
-			} else if setupCfg != nil {
-				fmt.Println("Running workspace setup...")
-				if err := setup.RunSetup(proj.Path, wtPath, setupCfg); err != nil {
-					fmt.Printf("Warning: setup failed: %v\n", err)
-				}
+		if !noSetup && proj.Setup != nil {
+			fmt.Println("Running workspace setup...")
+			if err := setup.RunSetup(proj, wtPath); err != nil {
+				fmt.Printf("Warning: setup failed: %v\n", err)
 			}
 		}
 

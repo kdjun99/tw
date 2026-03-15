@@ -39,6 +39,9 @@ var projectAddCmd = &cobra.Command{
 		}
 
 		worktreeDir, _ := cmd.Flags().GetString("worktree-dir")
+		copyFiles, _ := cmd.Flags().GetStringSlice("copy")
+		setupRun, _ := cmd.Flags().GetStringSlice("setup-run")
+		teardownRun, _ := cmd.Flags().GetStringSlice("teardown-run")
 
 		cfg, err := config.Load()
 		if err != nil {
@@ -50,6 +53,18 @@ var projectAddCmd = &cobra.Command{
 			Path:          path,
 			DefaultBranch: defaultBranch,
 			WorktreeDir:   worktreeDir,
+		}
+
+		if len(copyFiles) > 0 || len(setupRun) > 0 {
+			p.Setup = &config.SetupConfig{
+				Copy: copyFiles,
+				Run:  setupRun,
+			}
+		}
+		if len(teardownRun) > 0 {
+			p.Teardown = &config.TeardownConfig{
+				Run: teardownRun,
+			}
 		}
 
 		if err := cfg.AddProject(p); err != nil {
@@ -105,6 +120,9 @@ var projectListCmd = &cobra.Command{
 func init() {
 	projectAddCmd.Flags().String("default-branch", "", "default branch (auto-detected if empty)")
 	projectAddCmd.Flags().String("worktree-dir", "", "custom worktree directory")
+	projectAddCmd.Flags().StringSlice("copy", nil, "files to copy from main repo to worktree (e.g. --copy .env,.env.local)")
+	projectAddCmd.Flags().StringSlice("setup-run", nil, "commands to run after worktree creation (e.g. --setup-run 'bun install')")
+	projectAddCmd.Flags().StringSlice("teardown-run", nil, "commands to run before worktree removal")
 
 	projectCmd.AddCommand(projectAddCmd, projectRmCmd, projectListCmd)
 	rootCmd.AddCommand(projectCmd)
