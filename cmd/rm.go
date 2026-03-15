@@ -58,8 +58,23 @@ var rmCmd = &cobra.Command{
 
 		// Run teardown and remove worktree
 		if !keepWorktree {
-			wtDir := proj.ResolveWorktreeDir()
-			wtPath := git.ResolveWorktreePath(wtDir, branch)
+			// Find actual worktree path from git worktree list
+			wtPath := ""
+			worktrees, err := git.ListWorktrees(proj.Path)
+			if err == nil {
+				for _, wt := range worktrees {
+					if wt.Branch == branch {
+						wtPath = wt.Path
+						break
+					}
+				}
+			}
+
+			// Fallback to computed path if not found in worktree list
+			if wtPath == "" {
+				wtDir := proj.ResolveWorktreeDir()
+				wtPath = git.ResolveWorktreePath(wtDir, branch)
+			}
 
 			setup.RunTeardown(proj, wtPath)
 

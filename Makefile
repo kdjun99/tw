@@ -1,5 +1,5 @@
 BIN_NAME := tw
-INSTALL_DIR := $(HOME)/.local/bin
+INSTALL_DIR := /usr/local/bin
 
 .PHONY: build install clean
 
