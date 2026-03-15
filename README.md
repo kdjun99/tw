@@ -200,14 +200,26 @@ Diff stats (+1893 -4)        →  tw status (git diff)
 
 ### Directory structure / 디렉토리 구조
 
+All worktrees are stored under `~/.tw/` by default, keeping your dev directory clean.
+
+모든 워크트리는 기본적으로 `~/.tw/` 아래에 저장되어 dev 디렉토리를 깔끔하게 유지합니다.
+
 ```
+~/.tw/                             # centralized worktree storage
+├── my-app/
+│   ├── feature-login/             # worktree for feature/login branch
+│   └── fix-bug-123/               # worktree for fix/bug-123 branch
+└── api-server/
+    └── feature-dashboard/         # worktree for feature/dashboard branch
+
 ~/dev/
-├── my-app/                    # main repo (registered project)
-├── my-app-worktrees/          # auto-created worktree directory
-│   ├── feature-login/         # worktree for feature/login branch
-│   └── fix-bug-123/           # worktree for fix/bug-123 branch
-└── api-server/                # another registered project
+├── my-app/                        # main repo (registered project)
+└── api-server/                    # another registered project
 ```
+
+You can override the worktree directory per project with `--worktree-dir`.
+
+프로젝트별로 `--worktree-dir`로 워크트리 저장 경로를 변경할 수 있습니다.
 
 ### Config / 설정
 
