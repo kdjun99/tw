@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/dongjunkim/tw/internal/config"
 )
@@ -38,7 +39,21 @@ func RunSetup(proj *config.Project, worktreePath string) error {
 	// Run commands
 	for _, cmdStr := range proj.Setup.Run {
 		fmt.Printf("  Running: %s\n", cmdStr)
-		cmd := exec.Command("sh", "-c", cmdStr)
+		shell := os.Getenv("SHELL")
+		if shell == "" {
+			shell = "sh"
+		}
+		// Use -c with explicit rc file sourcing to load tools like nvm
+		wrappedCmd := cmdStr
+		if shell != "sh" {
+			// Source the shell's rc file so tools like nvm, rbenv, pyenv are available
+			rcFile := os.Getenv("HOME") + "/.zshrc"
+			if strings.HasSuffix(shell, "/bash") {
+				rcFile = os.Getenv("HOME") + "/.bashrc"
+			}
+			wrappedCmd = fmt.Sprintf("source %s 2>/dev/null; %s", rcFile, cmdStr)
+		}
+		cmd := exec.Command(shell, "-c", wrappedCmd)
 		cmd.Dir = worktreePath
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
@@ -57,7 +72,21 @@ func RunTeardown(proj *config.Project, worktreePath string) {
 
 	for _, cmdStr := range proj.Teardown.Run {
 		fmt.Printf("  Running teardown: %s\n", cmdStr)
-		cmd := exec.Command("sh", "-c", cmdStr)
+		shell := os.Getenv("SHELL")
+		if shell == "" {
+			shell = "sh"
+		}
+		// Use -c with explicit rc file sourcing to load tools like nvm
+		wrappedCmd := cmdStr
+		if shell != "sh" {
+			// Source the shell's rc file so tools like nvm, rbenv, pyenv are available
+			rcFile := os.Getenv("HOME") + "/.zshrc"
+			if strings.HasSuffix(shell, "/bash") {
+				rcFile = os.Getenv("HOME") + "/.bashrc"
+			}
+			wrappedCmd = fmt.Sprintf("source %s 2>/dev/null; %s", rcFile, cmdStr)
+		}
+		cmd := exec.Command(shell, "-c", wrappedCmd)
 		cmd.Dir = worktreePath
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
