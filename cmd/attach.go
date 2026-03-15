@@ -89,8 +89,9 @@ var attachCmd = &cobra.Command{
 				}
 			}
 
+			firstWindow := true
 			for _, wt := range worktrees {
-				if wt.Bare || wt.Path == proj.Path {
+				if wt.Bare {
 					continue
 				}
 				branchName := wt.Branch
@@ -98,6 +99,14 @@ var attachCmd = &cobra.Command{
 					continue
 				}
 				winName := shortBranch(branchName)
+
+				// For main worktree on fresh session, rename the default surface
+				if wt.Path == proj.Path && sessionCreated && firstWindow {
+					b.RenameWindow(projectName, "", winName)
+					firstWindow = false
+					continue
+				}
+
 				if existingWindows[winName] {
 					continue
 				}

@@ -126,6 +126,27 @@ func (c *CmuxBackend) SwitchTo(session, window string) error {
 	return nil
 }
 
+func (c *CmuxBackend) RenameWindow(session, oldName, newName string) error {
+	wsRef, err := c.findWorkspaceRef(session)
+	if err != nil {
+		return err
+	}
+
+	surfaces, err := c.listSurfacesRaw(wsRef)
+	if err != nil {
+		return err
+	}
+
+	for _, s := range surfaces {
+		// If oldName is empty, rename the first surface (default tab)
+		if oldName == "" || s.title == oldName {
+			_, err := runCmux("rename-tab", "--workspace", wsRef, "--surface", s.ref, newName)
+			return err
+		}
+	}
+	return fmt.Errorf("surface %q not found in workspace %q", oldName, session)
+}
+
 func (c *CmuxBackend) ListWindows(session string) ([]Window, error) {
 	wsRef, err := c.findWorkspaceRef(session)
 	if err != nil {

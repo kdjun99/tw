@@ -31,6 +31,10 @@ func (t *TmuxBackend) SwitchTo(session, window string) error {
 	return tmux.SwitchTo(session, window)
 }
 
+func (t *TmuxBackend) RenameWindow(session, oldName, newName string) error {
+	return tmux.RenameWindow(session, oldName, newName)
+}
+
 func (t *TmuxBackend) ListWindows(session string) ([]Window, error) {
 	windows, err := tmux.ListWindows(session)
 	if err != nil {

@@ -25,6 +25,9 @@ type Backend interface {
 
 	// ListWindows returns all windows in a session.
 	ListWindows(session string) ([]Window, error)
+
+	// RenameWindow renames a window/tab. If oldName is empty, renames the first/default window.
+	RenameWindow(session, oldName, newName string) error
 }
 
 // Window represents a terminal window/tab.
