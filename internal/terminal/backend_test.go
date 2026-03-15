@@ -133,6 +133,101 @@ func TestParseCmuxWorkspaceLine(t *testing.T) {
 	}
 }
 
+func TestParseCmuxSurfaceLine(t *testing.T) {
+	tests := []struct {
+		name     string
+		line     string
+		wantRef  string
+		wantTitle string
+		wantSel  bool
+	}{
+		{
+			name:     "normal surface",
+			line:     "  surface:1  test-rename",
+			wantRef:  "surface:1",
+			wantTitle: "test-rename",
+			wantSel:  false,
+		},
+		{
+			name:     "selected surface",
+			line:     "* surface:27  Terminal  [selected]",
+			wantRef:  "surface:27",
+			wantTitle: "Terminal",
+			wantSel:  true,
+		},
+		{
+			name:     "surface with path title",
+			line:     "  surface:5  ~/dev/myapp",
+			wantRef:  "surface:5",
+			wantTitle: "~/dev/myapp",
+			wantSel:  false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := parseCmuxSurfaceLine(tt.line)
+			if s.ref != tt.wantRef {
+				t.Errorf("ref = %q, want %q", s.ref, tt.wantRef)
+			}
+			if s.title != tt.wantTitle {
+				t.Errorf("title = %q, want %q", s.title, tt.wantTitle)
+			}
+			if s.selected != tt.wantSel {
+				t.Errorf("selected = %v, want %v", s.selected, tt.wantSel)
+			}
+		})
+	}
+}
+
+func TestParseNewSurfaceRef(t *testing.T) {
+	tests := []struct {
+		name   string
+		output string
+		want   string
+	}{
+		{
+			name:   "OK with surface ref",
+			output: "OK surface:27 pane:1 workspace:1\n",
+			want:   "surface:27",
+		},
+		{
+			name:   "no surface in output",
+			output: "OK\n",
+			want:   "",
+		},
+		{
+			name:   "empty",
+			output: "",
+			want:   "",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := parseNewSurfaceRef(tt.output)
+			if got != tt.want {
+				t.Errorf("parseNewSurfaceRef() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestShellEscape(t *testing.T) {
+	tests := []struct {
+		input string
+		want  string
+	}{
+		{"/dev/myapp", "'/dev/myapp'"},
+		{"/path/with spaces", "'/path/with spaces'"},
+		{"it's a test", "'it'\\''s a test'"},
+	}
+	for _, tt := range tests {
+		got := shellEscape(tt.input)
+		if got != tt.want {
+			t.Errorf("shellEscape(%q) = %q, want %q", tt.input, got, tt.want)
+		}
+	}
+}
+
 func TestParseNewWorkspaceRef(t *testing.T) {
 	tests := []struct {
 		name   string
