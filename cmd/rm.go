@@ -38,6 +38,9 @@ var rmCmd = &cobra.Command{
 
 		keepWorktree, _ := cmd.Flags().GetBool("keep-worktree")
 		keepTerminal, _ := cmd.Flags().GetBool("keep-terminal")
+		if keepTmux, _ := cmd.Flags().GetBool("keep-tmux"); keepTmux {
+			keepTerminal = true
+		}
 
 		// Remove terminal window
 		if !keepTerminal {

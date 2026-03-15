@@ -48,6 +48,9 @@ var addCmd = &cobra.Command{
 
 		useExisting, _ := cmd.Flags().GetBool("existing")
 		noTerminal, _ := cmd.Flags().GetBool("no-terminal")
+		if noTmux, _ := cmd.Flags().GetBool("no-tmux"); noTmux {
+			noTerminal = true
+		}
 
 		// Resolve worktree path
 		wtDir := proj.ResolveWorktreeDir()
