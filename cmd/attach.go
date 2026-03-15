@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/dongjunkim/tw/internal/config"
+	"github.com/dongjunkim/tw/internal/git"
 	"github.com/dongjunkim/tw/internal/tmux"
 	"github.com/dongjunkim/tw/internal/ui"
 	"github.com/spf13/cobra"
@@ -65,11 +66,46 @@ var attachCmd = &cobra.Command{
 		}
 
 		// Ensure tmux session exists
+		sessionCreated := false
 		if !tmux.SessionExists(projectName) {
 			if err := tmux.CreateSession(projectName, proj.Path); err != nil {
 				return fmt.Errorf("create session: %w", err)
 			}
 			fmt.Printf("Created tmux session %q\n", projectName)
+			sessionCreated = true
+		}
+
+		// Sync worktree windows: create missing windows for existing worktrees
+		worktrees, err := git.ListWorktrees(proj.Path)
+		if err == nil {
+			// Get existing windows to avoid duplicates
+			existingWindows := map[string]bool{}
+			if !sessionCreated {
+				if windows, err := tmux.ListWindows(projectName); err == nil {
+					for _, w := range windows {
+						existingWindows[w.Name] = true
+					}
+				}
+			}
+
+			for _, wt := range worktrees {
+				if wt.Bare || wt.Path == proj.Path {
+					continue
+				}
+				branchName := wt.Branch
+				if branchName == "" {
+					continue
+				}
+				winName := shortBranch(branchName)
+				if existingWindows[winName] {
+					continue
+				}
+				if err := tmux.NewWindow(projectName, winName, wt.Path); err != nil {
+					fmt.Printf("Warning: could not create window for %s: %v\n", branchName, err)
+				} else {
+					fmt.Printf("  Window %q (%s)\n", winName, branchName)
+				}
+			}
 		}
 
 		// Attach/switch to session (optionally with window)
